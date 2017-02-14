@@ -2,15 +2,16 @@ module.exports = {
   entry: "./src/entry.js",
 
   output: {
-    path: '/public',
+    path: 'public',
     filename: "bundle.js"
   },
 
   module: {
     loaders: [
       {
-        test: /\.css/,
-        loader: "style-loader!css-loader",
+        test: /\.scss/,
+        exclude: /node_modules/,
+        loader: "style-loader!css-loader!sass-loader",
       },
       {
         test: /\.js$/,

@@ -1,117 +1,83 @@
-require("./style.css");
-require("./threeTest.js");
-const React = require("react");
-const ReactDOM = require("react-dom");
+import "./css/style.scss";
+import React from "react";
+import ReactDOM from "react-dom";
+import Layout from "./components/layout.js";
+import TodoTabel from "./components/todoTable.js";
 
 class App extends React.Component {
   constructor() {
     super();
     this.state = {
-      newtask: "",
-      todos: [
-        {
-          title: "サンプル1",
-          create_date: new Date(),
-          fix_date: null,
-          status: "standby",
-        }
-      ]
+      todos: JSON.parse(localStorage.getItem('todos')) || []
     };
   }
 
-  chengeNewTask(e) {
+  saveTodos() {
+    const todos = this.state.todos;
+    localStorage.setItem('todos', JSON.stringify(todos));
+  }
+
+  deleteTodo(id) {
     this.setState({
-      newtask: e.target.value
-    })
+      todos: this.state.todos.map( v => {
+        if (v.id == id) v.status = 'delete'
+        return v;
+      })
+    }, this.saveTodos);
   }
 
-  deleteTask(i) {
+  fixTodo(id) {
     this.setState({
-      todos: this.state.todos.filter( (v, d) => i != d ? true : false)
-    })
+      todos: this.state.todos.map( v => {
+        if (v.id == id) v.status = 'fix'
+        return v;
+      })
+    }, this.saveTodos);
   }
 
-  fixTask(i) {
-    var todos = this.state.todos;
-    console.log(todos[i].create_date);
-    todos[i].status = "fix";
-    todos[i].fix_date = new Date();
+  toggleTodo(id) {
     this.setState({
-      todos: todos
-    })
+      todos: this.state.todos.map( v => {
+        if (v.id == id) {
+          v.status = v.status == 'start' ? 'stop' : 'start';
+        } else {
+          v.status = v.status == 'start' ? 'stop' : v.status;
+        }
+        return v;
+      })
+    }, this.saveTodos);
   }
 
-  addTask() {
-    if (!this.state.newtask) return;
-    const v = {
-      title: this.state.newtask,
-      create_date: new Date(),
-      fix_date: null,
-      status: "standby",
-    }
+  addTodo(e) {
+    if(e.key !== 'Enter' || e.target.value === '') return
     this.setState({
-      newtask: "",
-      todos: this.state.todos.concat([v])
-    })
-  }
-
-  toTime(v) {
-    return v ? v.getHours() + ":" + v.getMinutes() : '-';
-  }
-
-  renderTasks() {
-    return this.state.todos.map( (v, i) => {
-      return (
-        <tr key={i}>
-          <td>{v.title}</td>
-          <td>{v.status}</td>
-          <td>{this.toTime(v.create_date)}</td>
-          <td>{this.toTime(v.fix_date)}</td>
-          <td>
-            <button onClick={ () => this.deleteTask(i)}>削除</button>
-            <button onClick={ () => this.fixTask(i)}>完了</button>
-          </td>
-        </tr>
-      )
-    })
+      todos: this.state.todos.concat([{
+        id: this.state.todos.length + 1,
+        title: e.target.value,
+        create_date: new Date(),
+        fix_date: null,
+        status: "standby",
+      }])
+    }, this.saveTodos);
+    e.target.value = '';
   }
 
   render() {
     return (
-      <main>
-        <h1>TODO</h1>
-        <table>
-          <thead>
-            <tr>
-              <th>タスク</th>
-              <th>ステータス</th>
-              <th>作成日</th>
-              <th>完了日</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {this.renderTasks()}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td>
-                <input
-                  value={this.state.newtask}
-                  onChange={e => this.chengeNewTask(e)}
-                  onKeyPress={e => e.key == 'Enter' ? this.addTask() : ''}
-                />
-              </td>
-              <td>
-                <button onClick={ () => this.addTask()}>追加</button>
-              </td>
-              <td />
-              <td />
-              <td />
-            </tr>
-          </tfoot>
-        </table>
-      </main>
+      <Layout>
+        <TodoTabel
+          todos={this.state.todos}
+          onDeleteTodo={this.deleteTodo.bind(this)}
+          onFixTodo={this.fixTodo.bind(this)}
+          onToggleTodo={this.toggleTodo.bind(this)}
+        />
+        <input
+          className="form-control"
+          type="text"
+          placeholder="新規タスク"
+          onKeyPress={e=>this.addTodo(e)}
+        />
+      </Layout>
     )
   }
 }
